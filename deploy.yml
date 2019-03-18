@@ -1,0 +1,28 @@
+- name: deploy war file
+  hosts: all
+  become: yes
+  tasks:
+    - name: find webapps file
+      become_user: student
+      find:
+        path: /home/student/apache-tomcat-9.0.16/webapps
+        file_type: any
+      register: out
+
+    - name: remove webapps
+      become_user: student
+      file:
+        path: "{{item.path}}"
+        state: absent
+      loop: "{{out.files}}"  
+
+    - name: find war file
+      local_action: find path="/home/centos/workspace/prod-pipeline-job/APPCODE/target" patterns="*.war"
+      register: out
+      
+    - name: copy war file
+      copy:
+        src: "{{item.path}}"
+        dest: /home/student/apache-tomcat-9.0.16/webapps/studentapp.war
+      loop: "{{out.files}}"
+
